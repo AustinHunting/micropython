@@ -60,7 +60,7 @@ mp_obj_t mp_micropython_mem_info(size_t n_args, const mp_obj_t *args) {
         (mp_uint_t)m_get_total_bytes_allocated(), (mp_uint_t)m_get_current_bytes_allocated(), (mp_uint_t)m_get_peak_bytes_allocated());
 #endif
 #if MICROPY_STACK_CHECK
-    mp_printf(&mp_plat_print, "stack: " UINT_FMT " out of " INT_FMT "\n", mp_stack_usage(), MP_STATE_VM(stack_limit));
+    mp_printf(&mp_plat_print, "stack: " UINT_FMT " out of " INT_FMT "\n", mp_stack_usage(), MP_STATE_THREAD(stack_limit));
 #else
     mp_printf(&mp_plat_print, "stack: " UINT_FMT "\n", mp_stack_usage());
 #endif
@@ -120,6 +120,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_alloc_emergency_exception_buf_obj, mp_alloc_
 
 STATIC const mp_rom_map_elem_t mp_module_micropython_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_micropython) },
+    { MP_ROM_QSTR(MP_QSTR_const), MP_ROM_PTR(&mp_identity_obj) },
 #if MICROPY_PY_MICROPYTHON_MEM_INFO
 #if MICROPY_MEM_STATS
     { MP_ROM_QSTR(MP_QSTR_mem_total), MP_ROM_PTR(&mp_micropython_mem_total_obj) },
@@ -145,6 +146,5 @@ STATIC MP_DEFINE_CONST_DICT(mp_module_micropython_globals, mp_module_micropython
 
 const mp_obj_module_t mp_module_micropython = {
     .base = { &mp_type_module },
-    .name = MP_QSTR_micropython,
     .globals = (mp_obj_dict_t*)&mp_module_micropython_globals,
 };

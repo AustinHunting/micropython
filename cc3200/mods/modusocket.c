@@ -486,7 +486,7 @@ STATIC const mp_obj_type_t socket_type = {
     { &mp_type_type },
     .name = MP_QSTR_socket,
     .make_new = socket_make_new,
-    .stream_p = &socket_stream_p,
+    .protocol = &socket_stream_p,
     .locals_dict = (mp_obj_t)&socket_locals_dict,
 };
 
@@ -541,6 +541,5 @@ STATIC MP_DEFINE_CONST_DICT(mp_module_usocket_globals, mp_module_usocket_globals
 
 const mp_obj_module_t mp_module_usocket = {
     .base = { &mp_type_module },
-    .name = MP_QSTR_usocket,
     .globals = (mp_obj_dict_t*)&mp_module_usocket_globals,
 };

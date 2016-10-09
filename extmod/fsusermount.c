@@ -31,8 +31,9 @@
 
 #include "py/nlr.h"
 #include "py/runtime.h"
+#include "py/mperrno.h"
 #include "lib/fatfs/ff.h"
-#include "fsusermount.h"
+#include "extmod/fsusermount.h"
 
 fs_user_mount_t *fatfs_mount_mkfs(mp_uint_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args, bool mkfs) {
     static const mp_arg_t allowed_args[] = {
@@ -81,8 +82,7 @@ fs_user_mount_t *fatfs_mount_mkfs(mp_uint_t n_args, const mp_obj_t *pos_args, mp
         }
 
         // create new object
-        fs_user_mount_t *vfs;
-        MP_STATE_PORT(fs_user_mount)[i] = vfs = m_new_obj(fs_user_mount_t);
+        fs_user_mount_t *vfs = m_new_obj(fs_user_mount_t);
         vfs->str = mnt_str;
         vfs->len = mnt_len;
         vfs->flags = FSUSER_FREE_OBJ;
@@ -108,6 +108,11 @@ fs_user_mount_t *fatfs_mount_mkfs(mp_uint_t n_args, const mp_obj_t *pos_args, mp
             vfs->writeblocks[0] = MP_OBJ_NULL;
         }
 
+        // Register the vfs object so that it can be found by the FatFS driver using
+        // ff_get_ldnumber.  We don't register it any earlier than this point in case there
+        // is an exception, in which case there would remain a partially mounted device.
+        MP_STATE_PORT(fs_user_mount)[i] = vfs;
+
         // mount the block device (if mkfs, only pre-mount)
         FRESULT res = f_mount(&vfs->fatfs, vfs->str, !mkfs);
         // check the result
@@ -120,6 +125,7 @@ mkfs:
             res = f_mkfs(vfs->str, 1, 0);
             if (res != FR_OK) {
 mkfs_error:
+                MP_STATE_PORT(fs_user_mount)[i] = NULL;
                 nlr_raise(mp_obj_new_exception_msg(&mp_type_OSError, "can't mkfs"));
             }
             if (mkfs) {
@@ -132,6 +138,7 @@ mkfs_error:
                 return NULL;
             }
         } else {
+            MP_STATE_PORT(fs_user_mount)[i] = NULL;
             nlr_raise(mp_obj_new_exception_msg(&mp_type_OSError, "can't mount"));
         }
 
@@ -156,7 +163,7 @@ STATIC mp_obj_t fatfs_mount(size_t n_args, const mp_obj_t *pos_args, mp_map_t *k
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(fsuser_mount_obj, 2, fatfs_mount);
 
-STATIC mp_obj_t fatfs_umount(mp_obj_t bdev_or_path_in) {
+mp_obj_t fatfs_umount(mp_obj_t bdev_or_path_in) {
     size_t i = 0;
     if (MP_OBJ_IS_STR(bdev_or_path_in)) {
         mp_uint_t mnt_len;
@@ -177,7 +184,7 @@ STATIC mp_obj_t fatfs_umount(mp_obj_t bdev_or_path_in) {
     }
 
     if (i == MP_ARRAY_SIZE(MP_STATE_PORT(fs_user_mount))) {
-        nlr_raise(mp_obj_new_exception_arg1(&mp_type_OSError, MP_OBJ_NEW_SMALL_INT(EINVAL)));
+        mp_raise_OSError(MP_EINVAL);
     }
 
     fs_user_mount_t *vfs = MP_STATE_PORT(fs_user_mount)[i];

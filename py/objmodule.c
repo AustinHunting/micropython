@@ -37,17 +37,23 @@ STATIC void module_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kin
     (void)kind;
     mp_obj_module_t *self = MP_OBJ_TO_PTR(self_in);
 
+    const char *module_name = "";
+    mp_map_elem_t *elem = mp_map_lookup(&self->globals->map, MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_MAP_LOOKUP);
+    if (elem != NULL) {
+        module_name = mp_obj_str_get_str(elem->value);
+    }
+
 #if MICROPY_PY___FILE__
     // If we store __file__ to imported modules then try to lookup this
     // symbol to give more information about the module.
-    mp_map_elem_t *elem = mp_map_lookup(&self->globals->map, MP_OBJ_NEW_QSTR(MP_QSTR___file__), MP_MAP_LOOKUP);
+    elem = mp_map_lookup(&self->globals->map, MP_OBJ_NEW_QSTR(MP_QSTR___file__), MP_MAP_LOOKUP);
     if (elem != NULL) {
-        mp_printf(print, "<module '%q' from '%s'>", self->name, mp_obj_str_get_str(elem->value));
+        mp_printf(print, "<module '%s' from '%s'>", module_name, mp_obj_str_get_str(elem->value));
         return;
     }
 #endif
 
-    mp_printf(print, "<module '%q'>", self->name);
+    mp_printf(print, "<module '%s'>", module_name);
 }
 
 STATIC void module_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
@@ -106,7 +112,6 @@ mp_obj_t mp_obj_new_module(qstr module_name) {
     // create new module object
     mp_obj_module_t *o = m_new_obj(mp_obj_module_t);
     o->base.type = &mp_type_module;
-    o->name = module_name;
     o->globals = MP_OBJ_TO_PTR(mp_obj_new_dict(MICROPY_MODULE_DICT_SIZE));
 
     // store __name__ entry in the module
@@ -137,10 +142,10 @@ STATIC const mp_rom_map_elem_t mp_builtin_module_table[] = {
     { MP_ROM_QSTR(MP_QSTR_array), MP_ROM_PTR(&mp_module_array) },
 #endif
 #if MICROPY_PY_IO
-    { MP_ROM_QSTR(MP_QSTR__io), MP_ROM_PTR(&mp_module_io) },
+    { MP_ROM_QSTR(MP_QSTR_uio), MP_ROM_PTR(&mp_module_io) },
 #endif
 #if MICROPY_PY_COLLECTIONS
-    { MP_ROM_QSTR(MP_QSTR__collections), MP_ROM_PTR(&mp_module_collections) },
+    { MP_ROM_QSTR(MP_QSTR_ucollections), MP_ROM_PTR(&mp_module_collections) },
 #endif
 #if MICROPY_PY_STRUCT
     { MP_ROM_QSTR(MP_QSTR_ustruct), MP_ROM_PTR(&mp_module_ustruct) },
@@ -160,9 +165,15 @@ STATIC const mp_rom_map_elem_t mp_builtin_module_table[] = {
 #if MICROPY_PY_GC && MICROPY_ENABLE_GC
     { MP_ROM_QSTR(MP_QSTR_gc), MP_ROM_PTR(&mp_module_gc) },
 #endif
+#if MICROPY_PY_THREAD
+    { MP_ROM_QSTR(MP_QSTR__thread), MP_ROM_PTR(&mp_module_thread) },
+#endif
 
     // extmod modules
 
+#if MICROPY_PY_UERRNO
+    { MP_ROM_QSTR(MP_QSTR_uerrno), MP_ROM_PTR(&mp_module_uerrno) },
+#endif
 #if MICROPY_PY_UCTYPES
     { MP_ROM_QSTR(MP_QSTR_uctypes), MP_ROM_PTR(&mp_module_uctypes) },
 #endif
@@ -192,6 +203,18 @@ STATIC const mp_rom_map_elem_t mp_builtin_module_table[] = {
 #endif
 #if MICROPY_PY_LWIP
     { MP_ROM_QSTR(MP_QSTR_lwip), MP_ROM_PTR(&mp_module_lwip) },
+#endif
+#if MICROPY_PY_WEBSOCKET
+    { MP_ROM_QSTR(MP_QSTR_websocket), MP_ROM_PTR(&mp_module_websocket) },
+#endif
+#if MICROPY_PY_WEBREPL
+    { MP_ROM_QSTR(MP_QSTR__webrepl), MP_ROM_PTR(&mp_module_webrepl) },
+#endif
+#if MICROPY_PY_FRAMEBUF
+    { MP_ROM_QSTR(MP_QSTR_framebuf), MP_ROM_PTR(&mp_module_framebuf) },
+#endif
+#if MICROPY_PY_BTREE
+    { MP_ROM_QSTR(MP_QSTR_btree), MP_ROM_PTR(&mp_module_btree) },
 #endif
 
     // extra builtin modules as defined by a port

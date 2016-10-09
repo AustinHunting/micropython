@@ -31,6 +31,11 @@
 
 #include <math.h>
 
+// M_PI is not part of the math.h standard and may not be defined
+#ifndef M_PI
+#define M_PI (3.14159265358979323846)
+#endif
+
 /// \module math - mathematical functions
 ///
 /// The `math` module provides some basic mathematical funtions for
@@ -263,7 +268,6 @@ STATIC MP_DEFINE_CONST_DICT(mp_module_math_globals, mp_module_math_globals_table
 
 const mp_obj_module_t mp_module_math = {
     .base = { &mp_type_module },
-    .name = MP_QSTR_math,
     .globals = (mp_obj_dict_t*)&mp_module_math_globals,
 };
 

@@ -477,6 +477,14 @@ void PVD_IRQHandler(void) {
     IRQ_EXIT(PVD_IRQn);
 }
 
+#if defined(MCU_SERIES_L4)
+void PVD_PVM_IRQHandler(void) {
+    IRQ_ENTER(PVD_PVM_IRQn);
+    Handle_EXTI_Irq(EXTI_PVD_OUTPUT);
+    IRQ_EXIT(PVD_PVM_IRQn);
+}
+#endif
+
 void RTC_Alarm_IRQHandler(void) {
     IRQ_ENTER(RTC_Alarm_IRQn);
     Handle_EXTI_Irq(EXTI_RTC_ALARM);
@@ -510,6 +518,14 @@ void TIM1_BRK_TIM9_IRQHandler(void) {
     IRQ_EXIT(TIM1_BRK_TIM9_IRQn);
 }
 
+#if defined(MCU_SERIES_L4)
+void TIM1_BRK_TIM15_IRQHandler(void) {
+    IRQ_ENTER(TIM1_BRK_TIM15_IRQn);
+    timer_irq_handler(15);
+    IRQ_EXIT(TIM1_BRK_TIM15_IRQn);
+}
+#endif
+
 void TIM1_UP_TIM10_IRQHandler(void) {
     IRQ_ENTER(TIM1_UP_TIM10_IRQn);
     timer_irq_handler(1);
@@ -517,10 +533,33 @@ void TIM1_UP_TIM10_IRQHandler(void) {
     IRQ_EXIT(TIM1_UP_TIM10_IRQn);
 }
 
+#if defined(MCU_SERIES_L4)
+void TIM1_UP_TIM16_IRQHandler(void) {
+    IRQ_ENTER(TIM1_UP_TIM16_IRQn);
+    timer_irq_handler(1);
+    timer_irq_handler(16);
+    IRQ_EXIT(TIM1_UP_TIM16_IRQn);
+}
+#endif
+
 void TIM1_TRG_COM_TIM11_IRQHandler(void) {
     IRQ_ENTER(TIM1_TRG_COM_TIM11_IRQn);
     timer_irq_handler(11);
     IRQ_EXIT(TIM1_TRG_COM_TIM11_IRQn);
+}
+
+#if defined(MCU_SERIES_L4)
+void TIM1_TRG_COM_TIM17_IRQHandler(void) {
+    IRQ_ENTER(TIM1_TRG_COM_TIM17_IRQn);
+    timer_irq_handler(17);
+    IRQ_EXIT(TIM1_TRG_COM_TIM17_IRQn);
+}
+#endif
+
+void TIM1_CC_IRQHandler(void) {
+    IRQ_ENTER(TIM1_CC_IRQn);
+    timer_irq_handler(1);
+    IRQ_EXIT(TIM1_CC_IRQn);
 }
 
 void TIM2_IRQHandler(void) {
@@ -548,18 +587,23 @@ void TIM5_IRQHandler(void) {
     IRQ_EXIT(TIM5_IRQn);
 }
 
+#if defined(TIM6) // STM32F401 doesn't have TIM6
 void TIM6_DAC_IRQHandler(void) {
     IRQ_ENTER(TIM6_DAC_IRQn);
     timer_irq_handler(6);
     IRQ_EXIT(TIM6_DAC_IRQn);
 }
+#endif
 
+#if defined(TIM7) // STM32F401 doesn't have TIM7
 void TIM7_IRQHandler(void) {
     IRQ_ENTER(TIM7_IRQn);
     timer_irq_handler(7);
     IRQ_EXIT(TIM7_IRQn);
 }
+#endif
 
+#if defined(TIM8) // STM32F401 doesn't have TIM8
 void TIM8_BRK_TIM12_IRQHandler(void) {
     IRQ_ENTER(TIM8_BRK_TIM12_IRQn);
     timer_irq_handler(12);
@@ -573,11 +617,26 @@ void TIM8_UP_TIM13_IRQHandler(void) {
     IRQ_EXIT(TIM8_UP_TIM13_IRQn);
 }
 
+#if defined(MCU_SERIES_L4)
+void TIM8_UP_IRQHandler(void) {
+    IRQ_ENTER(TIM8_UP_IRQn);
+    timer_irq_handler(8);
+    IRQ_EXIT(TIM8_UP_IRQn);
+}
+#endif
+
+void TIM8_CC_IRQHandler(void) {
+    IRQ_ENTER(TIM8_CC_IRQn);
+    timer_irq_handler(8);
+    IRQ_EXIT(TIM8_CC_IRQn);
+}
+
 void TIM8_TRG_COM_TIM14_IRQHandler(void) {
     IRQ_ENTER(TIM8_TRG_COM_TIM14_IRQn);
     timer_irq_handler(14);
     IRQ_EXIT(TIM8_TRG_COM_TIM14_IRQn);
 }
+#endif
 
 // UART/USART IRQ handlers
 void USART1_IRQHandler(void) {

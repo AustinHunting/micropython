@@ -370,13 +370,12 @@ STATIC mp_obj_t mp_builtin_ord(mp_obj_t o_in) {
             "ord expects a character"));
     } else {
         nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_TypeError,
-            "ord() expected a character, but string of length %d found", len));
+            "ord() expected a character, but string of length %d found", (int)len));
     }
 }
 MP_DEFINE_CONST_FUN_OBJ_1(mp_builtin_ord_obj, mp_builtin_ord);
 
 STATIC mp_obj_t mp_builtin_pow(size_t n_args, const mp_obj_t *args) {
-    assert(2 <= n_args && n_args <= 3);
     switch (n_args) {
         case 2: return mp_binary_op(MP_BINARY_OP_POWER, args[0], args[1]);
         default: return mp_binary_op(MP_BINARY_OP_MODULO, mp_binary_op(MP_BINARY_OP_POWER, args[0], args[1]), args[2]); // TODO optimise...
@@ -439,6 +438,7 @@ STATIC mp_obj_t mp_builtin___repl_print__(mp_obj_t o) {
         mp_print_str(&mp_plat_print, "\n");
         #endif
         #if MICROPY_CAN_OVERRIDE_BUILTINS
+        // Set "_" special variable
         mp_obj_t dest[2] = {MP_OBJ_SENTINEL, o};
         mp_type_module.attr(MP_OBJ_FROM_PTR(&mp_module_builtins), MP_QSTR__, dest);
         #endif
@@ -491,7 +491,6 @@ STATIC mp_obj_t mp_builtin_round(size_t n_args, const mp_obj_t *args) {
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_builtin_round_obj, 1, 2, mp_builtin_round);
 
 STATIC mp_obj_t mp_builtin_sum(size_t n_args, const mp_obj_t *args) {
-    assert(1 <= n_args && n_args <= 2);
     mp_obj_t value;
     switch (n_args) {
         case 1: value = MP_OBJ_NEW_SMALL_INT(0); break;
@@ -507,7 +506,6 @@ STATIC mp_obj_t mp_builtin_sum(size_t n_args, const mp_obj_t *args) {
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_builtin_sum_obj, 1, 2, mp_builtin_sum);
 
 STATIC mp_obj_t mp_builtin_sorted(size_t n_args, const mp_obj_t *args, mp_map_t *kwargs) {
-    assert(n_args >= 1);
     if (n_args > 1) {
         nlr_raise(mp_obj_new_exception_msg(&mp_type_TypeError,
                                           "must use keyword argument for key function"));
@@ -579,6 +577,8 @@ MP_DEFINE_CONST_FUN_OBJ_1(mp_builtin_id_obj, mp_obj_id);
 MP_DEFINE_CONST_FUN_OBJ_1(mp_builtin_len_obj, mp_obj_len);
 
 STATIC const mp_rom_map_elem_t mp_module_builtins_globals_table[] = {
+    { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_builtins) },
+
     // built-in core functions
     { MP_ROM_QSTR(MP_QSTR___build_class__), MP_ROM_PTR(&mp_builtin___build_class___obj) },
     { MP_ROM_QSTR(MP_QSTR___import__), MP_ROM_PTR(&mp_builtin___import___obj) },
@@ -703,6 +703,9 @@ STATIC const mp_rom_map_elem_t mp_module_builtins_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_OSError), MP_ROM_PTR(&mp_type_OSError) },
     { MP_ROM_QSTR(MP_QSTR_OverflowError), MP_ROM_PTR(&mp_type_OverflowError) },
     { MP_ROM_QSTR(MP_QSTR_RuntimeError), MP_ROM_PTR(&mp_type_RuntimeError) },
+    #if MICROPY_PY_ASYNC_AWAIT
+    { MP_ROM_QSTR(MP_QSTR_StopAsyncIteration), MP_ROM_PTR(&mp_type_StopAsyncIteration) },
+    #endif
     { MP_ROM_QSTR(MP_QSTR_StopIteration), MP_ROM_PTR(&mp_type_StopIteration) },
     { MP_ROM_QSTR(MP_QSTR_SyntaxError), MP_ROM_PTR(&mp_type_SyntaxError) },
     { MP_ROM_QSTR(MP_QSTR_SystemExit), MP_ROM_PTR(&mp_type_SystemExit) },
@@ -726,6 +729,5 @@ MP_DEFINE_CONST_DICT(mp_module_builtins_globals, mp_module_builtins_globals_tabl
 
 const mp_obj_module_t mp_module_builtins = {
     .base = { &mp_type_module },
-    .name = MP_QSTR_builtins,
     .globals = (mp_obj_dict_t*)&mp_module_builtins_globals,
 };

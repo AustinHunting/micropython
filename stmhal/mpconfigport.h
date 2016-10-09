@@ -28,6 +28,9 @@
 #ifndef __INCLUDED_MPCONFIGPORT_H
 #define __INCLUDED_MPCONFIGPORT_H
 
+// board specific definitions
+#include "mpconfigboard.h"
+
 // options to control how Micro Python is built
 
 #define MICROPY_ALLOC_PATH_MAX      (128)
@@ -61,6 +64,7 @@
 #define MICROPY_STREAMS_NON_BLOCK   (1)
 #define MICROPY_MODULE_WEAK_LINKS   (1)
 #define MICROPY_CAN_OVERRIDE_BUILTINS (1)
+#define MICROPY_USE_INTERNAL_ERRNO  (1)
 #define MICROPY_PY_FUNCTION_ATTRS   (1)
 #define MICROPY_PY_BUILTINS_STR_UNICODE (1)
 #define MICROPY_PY_BUILTINS_STR_SPLITLINES (1)
@@ -80,6 +84,7 @@
 #define MICROPY_PY_CMATH            (1)
 #define MICROPY_PY_IO               (1)
 #define MICROPY_PY_IO_FILEIO        (1)
+#define MICROPY_PY_UERRNO           (1)
 #define MICROPY_PY_UBINASCII        (1)
 #define MICROPY_PY_URANDOM          (1)
 #define MICROPY_PY_URANDOM_EXTRA_FUNCS (1)
@@ -90,14 +95,24 @@
 #define MICROPY_PY_UHEAPQ           (1)
 #define MICROPY_PY_UHASHLIB         (1)
 #define MICROPY_PY_MACHINE          (1)
+#define MICROPY_PY_MACHINE_PULSE    (1)
+#define MICROPY_PY_MACHINE_I2C      (1)
+#define MICROPY_PY_MACHINE_SPI      (1)
+#define MICROPY_PY_MACHINE_SPI_MIN_DELAY (0)
+#define MICROPY_PY_FRAMEBUF         (1)
+
+#ifndef MICROPY_PY_USOCKET
+#define MICROPY_PY_USOCKET          (1)
+#endif
+
+#ifndef MICROPY_PY_NETWORK
+#define MICROPY_PY_NETWORK          (1)
+#endif
 
 #define MICROPY_ENABLE_EMERGENCY_EXCEPTION_BUF   (1)
 #define MICROPY_EMERGENCY_EXCEPTION_BUF_SIZE  (0)
 
 // extra built in names to add to the global namespace
-extern const struct _mp_obj_fun_builtin_t mp_builtin_help_obj;
-extern const struct _mp_obj_fun_builtin_t mp_builtin_input_obj;
-extern const struct _mp_obj_fun_builtin_t mp_builtin_open_obj;
 #define MICROPY_PORT_BUILTINS \
     { MP_OBJ_NEW_QSTR(MP_QSTR_help), (mp_obj_t)&mp_builtin_help_obj }, \
     { MP_OBJ_NEW_QSTR(MP_QSTR_input), (mp_obj_t)&mp_builtin_input_obj }, \
@@ -119,6 +134,20 @@ extern const struct _mp_obj_module_t mp_module_uselect;
 extern const struct _mp_obj_module_t mp_module_usocket;
 extern const struct _mp_obj_module_t mp_module_network;
 
+#if MICROPY_PY_USOCKET
+#define SOCKET_BUILTIN_MODULE               { MP_OBJ_NEW_QSTR(MP_QSTR_usocket), (mp_obj_t)&mp_module_usocket },
+#define SOCKET_BUILTIN_MODULE_WEAK_LINKS    { MP_OBJ_NEW_QSTR(MP_QSTR_socket), (mp_obj_t)&mp_module_usocket },
+#else
+#define SOCKET_BUILTIN_MODULE
+#define SOCKET_BUILTIN_MODULE_WEAK_LINKS
+#endif
+
+#if MICROPY_PY_NETWORK
+#define NETWORK_BUILTIN_MODULE              { MP_OBJ_NEW_QSTR(MP_QSTR_network), (mp_obj_t)&mp_module_network },
+#else
+#define NETWORK_BUILTIN_MODULE
+#endif
+
 #define MICROPY_PORT_BUILTIN_MODULES \
     { MP_OBJ_NEW_QSTR(MP_QSTR_umachine), (mp_obj_t)&machine_module }, \
     { MP_OBJ_NEW_QSTR(MP_QSTR_pyb), (mp_obj_t)&pyb_module }, \
@@ -126,8 +155,8 @@ extern const struct _mp_obj_module_t mp_module_network;
     { MP_OBJ_NEW_QSTR(MP_QSTR_uos), (mp_obj_t)&mp_module_uos }, \
     { MP_OBJ_NEW_QSTR(MP_QSTR_utime), (mp_obj_t)&mp_module_utime }, \
     { MP_OBJ_NEW_QSTR(MP_QSTR_uselect), (mp_obj_t)&mp_module_uselect }, \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_usocket), (mp_obj_t)&mp_module_usocket }, \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_network), (mp_obj_t)&mp_module_network }, \
+    SOCKET_BUILTIN_MODULE \
+    NETWORK_BUILTIN_MODULE \
 
 #define MICROPY_PORT_BUILTIN_MODULE_WEAK_LINKS \
     { MP_OBJ_NEW_QSTR(MP_QSTR_binascii), (mp_obj_t)&mp_module_ubinascii }, \
@@ -139,9 +168,10 @@ extern const struct _mp_obj_module_t mp_module_network;
     { MP_OBJ_NEW_QSTR(MP_QSTR_os), (mp_obj_t)&mp_module_uos }, \
     { MP_OBJ_NEW_QSTR(MP_QSTR_time), (mp_obj_t)&mp_module_utime }, \
     { MP_OBJ_NEW_QSTR(MP_QSTR_select), (mp_obj_t)&mp_module_uselect }, \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_socket), (mp_obj_t)&mp_module_usocket }, \
+    SOCKET_BUILTIN_MODULE_WEAK_LINKS \
     { MP_OBJ_NEW_QSTR(MP_QSTR_struct), (mp_obj_t)&mp_module_ustruct }, \
     { MP_OBJ_NEW_QSTR(MP_QSTR_machine), (mp_obj_t)&machine_module }, \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_errno), (mp_obj_t)&mp_module_uerrno }, \
 
 // extra constants
 #define MICROPY_PORT_CONSTANTS \
@@ -200,8 +230,6 @@ extern const struct _mp_obj_module_t mp_module_network;
 
 typedef int mp_int_t; // must be pointer size
 typedef unsigned int mp_uint_t; // must be pointer size
-typedef void *machine_ptr_t; // must be of pointer size
-typedef const void *machine_const_ptr_t; // must be of pointer size
 typedef long mp_off_t;
 
 #define MP_PLAT_PRINT_STRN(str, len) mp_hal_stdout_tx_strn_cooked(str, len)
@@ -233,17 +261,14 @@ static inline mp_uint_t disable_irq(void) {
 // garbage-collected heap. For completeness, emulate C heap via
 // GC heap. Note that MicroPython core never uses malloc() and friends,
 // so these defines are mostly to help extension module writers.
-#define malloc gc_alloc
-#define free gc_free
-#define realloc gc_realloc
+#define malloc(n) m_malloc(n)
+#define free(p) m_free(p)
+#define realloc(p, n) m_realloc(p, n)
 
 // see stm32f4XX_hal_conf.h USE_USB_FS & USE_USB_HS
 // at the moment only USB_FS is supported
 #define USE_DEVICE_MODE
 //#define USE_HOST_MODE
-
-// board specific definitions
-#include "mpconfigboard.h"
 
 // We need to provide a declaration/definition of alloca()
 #include <alloca.h>

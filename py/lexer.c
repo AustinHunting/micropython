@@ -190,7 +190,7 @@ STATIC void indent_pop(mp_lexer_t *lex) {
 //     c<op> = continue with <op>, if this opchar matches then continue matching
 // this means if the start of two ops are the same then they are equal til the last char
 
-STATIC const char *tok_enc =
+STATIC const char *const tok_enc =
     "()[]{},:;@~" // singles
     "<e=c<e="     // < <= << <<=
     ">e=c>e="     // > >= >> >>=
@@ -227,13 +227,17 @@ STATIC const uint8_t tok_enc_kind[] = {
 };
 
 // must have the same order as enum in lexer.h
-STATIC const char *tok_kw[] = {
+STATIC const char *const tok_kw[] = {
     "False",
     "None",
     "True",
     "and",
     "as",
     "assert",
+    #if MICROPY_PY_ASYNC_AWAIT
+    "async",
+    "await",
+    #endif
     "break",
     "class",
     "continue",
@@ -719,7 +723,8 @@ mp_lexer_t *mp_lexer_new(qstr src_name, void *stream_data, mp_lexer_stream_next_
     vstr_init(&lex->vstr, 32);
 
     // check for memory allocation error
-    if (lex->indent_level == NULL || vstr_had_error(&lex->vstr)) {
+    // note: vstr_init above may fail on malloc, but so may mp_lexer_next_token_into below
+    if (lex->indent_level == NULL) {
         mp_lexer_free(lex);
         return NULL;
     }

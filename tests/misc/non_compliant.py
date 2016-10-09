@@ -1,6 +1,7 @@
 # tests for things that are not implemented, or have non-compliant behaviour
 
 import array
+import ustruct
 
 # array deletion not implemented
 try:
@@ -70,3 +71,26 @@ try:
 except NotImplementedError:
     print('NotImplementedError')
 
+# tuple load with step!=1 not implemented
+try:
+    ()[2:3:4]
+except NotImplementedError:
+    print('NotImplementedError')
+
+# list store with step!=1 not implemented
+try:
+    [][2:3:4] = []
+except NotImplementedError:
+    print('NotImplementedError')
+
+# list delete with step!=1 not implemented
+try:
+    del [][2:3:4]
+except NotImplementedError:
+    print('NotImplementedError')
+
+# struct pack with too many args, not checked by uPy
+print(ustruct.pack('bb', 1, 2, 3))
+
+# struct pack with too few args, not checked by uPy
+print(ustruct.pack('bb', 1))
